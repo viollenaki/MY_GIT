@@ -75,5 +75,3 @@ class Optima:
             print(entry)
 
 
-
-
