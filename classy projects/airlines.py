@@ -112,4 +112,4 @@ airline.get_sold_out_flights()
 airline.get_history()
 
 # Билеты, купленные пассажиром
-airline.get_passenger_tickets('Atabek')
+airline.get_passenger_tickets('Atabek')                                 
