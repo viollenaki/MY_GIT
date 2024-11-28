@@ -1,6 +1,7 @@
 import sys
 from PyQt5.QtWidgets import QMessageBox, QDialog, QApplication, QWidget, QLabel, QTextEdit, QLineEdit, QPushButton, QTextEdit, QVBoxLayout
 from PyQt5.QtGui import QFont
+from PyQt5.QtCore import Qt
 from collections import defaultdict
 import requests
 
@@ -15,14 +16,35 @@ messages = defaultdict(list)
 me = []
 result = [False]
 
+
 class All_messages(QDialog):
-    def __init__(self):
-        super().__init__()
-        self.msg_dict = defaultdict(list)
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.setWindowTitle('All messages')
         self.setGeometry(200, 200, 400, 400)
-        self.show()
 
+        # Устанавливаем модальное окно
+        self.setWindowModality(Qt.ApplicationModal)
+
+        
+            
+
+        layout = QVBoxLayout()
+        self.close_button = QPushButton("Close")
+        self.close_button.clicked.connect(self.close)
+        
+        self.messages = QTextEdit()
+        self.messages.setReadOnly(True)  
+        
+        font = QFont()
+        font.setPointSize(14) 
+        self.messages.setFont(font)
+        
+        layout.addWidget(self.close_button)
+        layout.addWidget(self.messages)
+        self.setLayout(layout)
+        
+        self.show()
 
 
 class Registration(QDialog):
@@ -122,10 +144,10 @@ class MyApp(QWidget):
             self.contacts.setReadOnly(True)
             self.messages = QTextEdit()
             self.add_user_button = QPushButton("Add new user")
-            self.show_all_messages = QPushButton("Show all messages")
             self.messages.setReadOnly(True)
             self.message = QLineEdit()
             self.send_button = QPushButton("Send")
+            self.show_button = QPushButton("Show All messages")
             
             font = QFont()
             font.setPointSize(14) 
@@ -135,12 +157,12 @@ class MyApp(QWidget):
             self.messages.setFont(font)
             self.send_button.setFont(font)
             self.add_user_button.setFont(font)
-            self.show_all_messages.setFont(font)
+            self.show_button.setFont(font)
 
             self.send_button.clicked.connect(self.send)
             self.contacts.selectionChanged.connect(self.show_messages)
             self.add_user_button.clicked.connect(self.add_new_user)
-            self.show_all_messages.clicked.connect(self.All_messages())
+            self.show_button.clicked.connect(self.all_messages)
 
 
             layout = QVBoxLayout()
@@ -149,6 +171,7 @@ class MyApp(QWidget):
             layout.addWidget(self.messages)
             layout.addWidget(self.message)
             layout.addWidget(self.send_button)
+            layout.addWidget(self.show_button)
 
             self.setLayout(layout)
             self.setWindowTitle('AIT CHAT 2024')
@@ -177,7 +200,15 @@ class MyApp(QWidget):
                 if f'{sender}' in i:
                     arr.append(i)
             self.messages.setText('\n'.join(arr))
-    
+    def all_messages(self):
+        self.text_show = All_messages()
+        sender = me[0]
+        receiver = me[0]
+        url = 'https://ait23.pythonanywhere.com/getChat'
+        response = requests.get(url, json= {'sender': sender, 'receiver': receiver})
+        r = response.json().get('response', '').split('\n')
+        self.text_show.messages.setText('\n'.join(r))
+        self.text_show.exec()    
 
     
     def add_new_user(self):
