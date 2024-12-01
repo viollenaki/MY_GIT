@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QMessageBox, QDialog, QApplication, QWidget, QLabel, QTextEdit, QLineEdit, QPushButton, QTextEdit, QVBoxLayout
+from PyQt5.QtWidgets import QAction,QMenu,QMessageBox, QDialog, QApplication, QWidget, QLabel, QTextEdit, QLineEdit, QPushButton, QTextEdit, QVBoxLayout
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 from collections import defaultdict
@@ -33,6 +33,11 @@ class All_messages(QDialog):
         self.close_button = QPushButton("Close")
         self.close_button.clicked.connect(self.close)
         
+        self.drop_down_button = QPushButton("Users")
+        self.drop_down_button.setMenu(self.create_dropdown_menu())
+
+        
+        
         self.messages = QTextEdit()
         self.messages.setReadOnly(True)  
         
@@ -40,12 +45,65 @@ class All_messages(QDialog):
         font.setPointSize(14) 
         self.messages.setFont(font)
         
+        layout.addWidget(self.drop_down_button)
         layout.addWidget(self.close_button)
         layout.addWidget(self.messages)
         self.setLayout(layout)
         
         self.show()
+    
+    def create_dropdown_menu(self):
+        # Получаем список пользователей с сервера
+        users = self.get_chat_users()
 
+        # Создаем меню
+        menu = QMenu()
+
+        for user in users:
+            action = QAction(user, self)
+            action.triggered.connect(lambda checked, u=user: self.menu_option_selected(u))
+            menu.addAction(action)
+        
+        return menu
+
+    def menu_option_selected(self, option):
+        # Отображаем сообщения для выбранного пользователя
+        self.messages.setText(self.show_messages(option))
+
+    def show_messages(self, option):
+        user1 = me[0]  # текущий пользователь
+        user2 = option  # получатель — это выбранный пользователь
+        url = 'https://ait23.pythonanywhere.com/getChat'
+        response = requests.get(url, json={'sender': user1, 'receiver': user2})
+
+        messages = response.json().get('response', '').split('\n')
+        arr = []
+        for i in messages:
+            users = i.split(':')[0]
+            if user1 in users and user2 in users:
+                arr.append(i)
+        return '\n'.join(arr)
+        
+
+    def get_chat_users(self):
+        main_user = me[0] # текущий пользователь
+        url = 'https://ait23.pythonanywhere.com/getChat'
+        response = requests.get(url, json={'sender': main_user})
+
+        r = response.json().get('response', '').split('\n')
+        users = set()
+        for i in r:
+            message = i.split(':')[0]
+            user1, user2 = message.split('->')
+            if main_user not in user1:
+                  users.add(user1)
+            else:
+                  users.add(user2)
+        return list(users)
+                
+
+
+    
 
 class Registration(QDialog):
     def __init__(self):
@@ -200,6 +258,7 @@ class MyApp(QWidget):
                 if f'{sender}' in i:
                     arr.append(i)
             self.messages.setText('\n'.join(arr))
+
     def all_messages(self):
         self.text_show = All_messages()
         sender = me[0]
@@ -222,3 +281,5 @@ if __name__ == '__main__':
     window = MyApp()
     window.show()
     sys.exit(app.exec_())
+
+
