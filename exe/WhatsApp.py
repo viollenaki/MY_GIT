@@ -6,10 +6,7 @@ from collections import defaultdict
 import requests
 
 
-class Chat:
-    def __init__(self):
-        self.users = {}
-        self.messages = {}
+
 
 users = []
 messages = defaultdict(list)
